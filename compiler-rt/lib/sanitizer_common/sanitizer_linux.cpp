@@ -1972,6 +1972,7 @@ SignalContext::WriteFlag SignalContext::GetWriteFlag() const {
   u32 instr = *(u32 *)pc;
   return (instr >> 21) & 1 ? Write: Read;
 #elif defined(__riscv)
+  #define REG_PC 64
 #if SANITIZER_FREEBSD
   unsigned long pc = ucontext->uc_mcontext.mc_gpregs.gp_sepc;
 #else
@@ -2208,6 +2209,9 @@ static void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
   *bp = ucontext->uc_mcontext.gregs[11];
   *sp = ucontext->uc_mcontext.gregs[15];
 #elif defined(__riscv)
+  #define REG_PC 64
+  #define REG_SP 2
+  #define REG_S0 7
   ucontext_t *ucontext = (ucontext_t*)context;
 #    if SANITIZER_FREEBSD
   *pc = ucontext->uc_mcontext.mc_gpregs.gp_sepc;

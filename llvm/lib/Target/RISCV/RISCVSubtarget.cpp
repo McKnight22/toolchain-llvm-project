@@ -46,6 +46,11 @@ static cl::opt<int> RVVVectorBitsMin(
              "autovectorization with fixed width vectors."),
     cl::init(0), cl::Hidden);
 
+static cl::opt<unsigned> RVVVectorELENMax(
+    "riscv-v-fixed-length-vector-elen-max",
+    cl::desc("The maximum ELEN value to use for fixed length vectors."),
+    cl::init(64), cl::Hidden);
+
 static cl::opt<unsigned> RVVVectorLMULMax(
     "riscv-v-fixed-length-vector-lmul-max",
     cl::desc("The maximum LMUL value to use for fixed length vectors. "
@@ -70,13 +75,13 @@ RISCVSubtarget::initializeSubtargetDependencies(const Triple &TT, StringRef CPU,
                                                 StringRef ABIName) {
   // Determine default and user-specified characteristics
   bool Is64Bit = TT.isArch64Bit();
-  if (CPU.empty() || CPU == "generic")
-    CPU = Is64Bit ? "generic-rv64" : "generic-rv32";
-
-  if (TuneCPU.empty())
-    TuneCPU = CPU;
-
-  ParseSubtargetFeatures(CPU, TuneCPU, FS);
+  std::string CPUName = std::string(CPU);
+  std::string TuneCPUName = std::string(TuneCPU);
+  if (CPUName.empty() || CPUName == "generic")
+    CPUName = Is64Bit ? "generic-rv64" : "generic-rv32";
+  if (TuneCPUName.empty())
+    TuneCPUName = CPUName;
+  ParseSubtargetFeatures(CPUName, TuneCPUName, FS);
   if (Is64Bit) {
     XLenVT = MVT::i64;
     XLen = 64;

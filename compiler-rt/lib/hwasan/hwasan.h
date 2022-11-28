@@ -181,6 +181,9 @@ typedef unsigned long __hw_sigset_t;
 constexpr size_t kHwRegisterBufSize = 22;
 #  elif defined(__x86_64__)
 constexpr size_t kHwRegisterBufSize = 8;
+#  elif SANITIZER_RISCV64
+// riscv64, refer impl of __sigsetjmp
+constexpr size_t kHwRegisterBufSize = 26;
 #  endif
 typedef unsigned long long __hw_register_buf[kHwRegisterBufSize];
 struct __hw_jmp_buf_struct {

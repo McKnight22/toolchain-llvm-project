@@ -285,7 +285,7 @@ RelExpr RISCV::getRelExpr(const RelType type, const Symbol &s,
   case R_RISCV_TPREL_LO12_S:
     return R_TPREL;
   case R_RISCV_ALIGN:
-    return R_RELAX_HINT;
+    return R_NONE;
   case R_RISCV_TPREL_ADD:
   case R_RISCV_RELAX:
     return config->relax ? R_RELAX_HINT : R_NONE;

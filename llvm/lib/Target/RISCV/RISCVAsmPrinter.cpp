@@ -185,8 +185,16 @@ bool RISCVAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 }
 
 void RISCVAsmPrinter::emitStartOfAsmFile(Module &M) {
+  RISCVTargetStreamer &RTS =
+      static_cast<RISCVTargetStreamer &>(*OutStreamer->getTargetStreamer());
+
   if (TM.getTargetTriple().isOSBinFormatELF())
     emitAttributes();
+
+  if (const MDString *ModuleTargetABI = dyn_cast_or_null<MDString>(
+          M.getModuleFlag("target-abi"))) {
+    RTS.setTargetABI(RISCVABI::getTargetABI(ModuleTargetABI->getString()));
+  }
 }
 
 void RISCVAsmPrinter::emitEndOfAsmFile(Module &M) {

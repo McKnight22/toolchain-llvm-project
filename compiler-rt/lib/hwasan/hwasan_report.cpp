@@ -770,8 +770,14 @@ void ReportRegisters(uptr *frame, uptr pc) {
        frame[24], frame[25], frame[26], frame[27]);
   // hwasan_check* reduces the stack pointer by 256, then __hwasan_tag_mismatch
   // passes it to this function.
+#if defined(__aarch64__)
   Printf("    x28 %016llx  x29 %016llx  x30 %016llx   sp %016llx\n", frame[28],
-         frame[29], frame[30], reinterpret_cast<u8 *>(frame) + 256);
+       frame[29], frame[30], reinterpret_cast<u8 *>(frame) + 256);
+#elif SANITIZER_RISCV64
+  Printf("    x28 %016llx  x29 %016llx  x30 %016llx  x31 %016llx\n",
+       frame[28], frame[29], frame[30], frame[31]);
+#else
+#endif
 }
 
 }  // namespace __hwasan

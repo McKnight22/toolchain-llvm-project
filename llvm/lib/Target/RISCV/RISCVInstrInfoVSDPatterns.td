@@ -999,6 +999,13 @@ defm : VPatWConvertFP2ISDNode_V<fp_to_sint, "PseudoVFWCVT_RTZ_X_F_V">;
 defm : VPatWConvertFP2ISDNode_V<fp_to_uint, "PseudoVFWCVT_RTZ_XU_F_V">;
 defm : VPatWConvertI2FPSDNode_V<sint_to_fp, "PseudoVFWCVT_F_X_V">;
 defm : VPatWConvertI2FPSDNode_V<uint_to_fp, "PseudoVFWCVT_F_XU_V">;
+foreach fvtiToFWti = AllWidenableFloatVectors in {
+  defvar fvti = fvtiToFWti.Vti;
+  defvar fwti = fvtiToFWti.Wti;
+  def : Pat<(fwti.Vector (fpextend (fvti.Vector fvti.RegClass:$rs1))),
+            (!cast<Instruction>("PseudoVFWCVT_F_F_V_"#fvti.LMul.MX)
+                fvti.RegClass:$rs1, fvti.AVL, fvti.Log2SEW)>;
+}
 
 // 14.19. Narrowing Floating-Point/Integer Type-Convert Instructions
 defm : VPatNConvertFP2ISDNode_V<fp_to_sint, "PseudoVFNCVT_RTZ_X_F_W">;

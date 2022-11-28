@@ -2276,11 +2276,13 @@ void Generic_GCC::GCCInstallationDetector::AddDefaultGCCPrefixes(
   static const char *const RISCV32LibDirs[] = {"/lib32", "/lib"};
   static const char *const RISCV32Triples[] = {"riscv32-unknown-linux-gnu",
                                                "riscv32-linux-gnu",
-                                               "riscv32-unknown-elf"};
+                                               "riscv32-unknown-elf",
+                                               "riscv32-linux-android"};
   static const char *const RISCV64LibDirs[] = {"/lib64", "/lib"};
   static const char *const RISCV64Triples[] = {"riscv64-unknown-linux-gnu",
                                                "riscv64-linux-gnu",
-                                               "riscv64-unknown-elf"};
+                                               "riscv64-unknown-elf",
+                                               "riscv64-linux-android"};
 
   static const char *const SPARCv8LibDirs[] = {"/lib32", "/lib"};
   static const char *const SPARCv8Triples[] = {"sparc-linux-gnu",
@@ -2350,6 +2352,8 @@ void Generic_GCC::GCCInstallationDetector::AddDefaultGCCPrefixes(
         "mips64el-linux-android"};
     static const char *const X86AndroidTriples[] = {"i686-linux-android"};
     static const char *const X86_64AndroidTriples[] = {"x86_64-linux-android"};
+    static const char *const RISCV64AndroidTriples[] = {"riscv64-linux-android"};
+    static const char *const RISCV32AndroidTriples[] = {"riscv32-linux-android"};
 
     switch (TargetTriple.getArch()) {
     case llvm::Triple::aarch64:
@@ -2392,6 +2396,13 @@ void Generic_GCC::GCCInstallationDetector::AddDefaultGCCPrefixes(
       BiarchLibDirs.append(begin(X86_64LibDirs), end(X86_64LibDirs));
       BiarchTripleAliases.append(begin(X86_64AndroidTriples),
                                  end(X86_64AndroidTriples));
+    case llvm::Triple::riscv64:
+      LibDirs.append(begin(RISCV64LibDirs), end(RISCV64LibDirs));
+      TripleAliases.append(begin(RISCV64AndroidTriples),
+                           end(RISCV64AndroidTriples));
+      BiarchLibDirs.append(begin(RISCV32LibDirs), end(RISCV32LibDirs));
+      BiarchTripleAliases.append(begin(RISCV32AndroidTriples),
+                                 end(RISCV32AndroidTriples));
       break;
     default:
       break;

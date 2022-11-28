@@ -31,7 +31,7 @@
 #endif
 
 #if defined(_LIBUNWIND_TARGET_LINUX) &&                                        \
-    (defined(_LIBUNWIND_TARGET_AARCH64) || defined(_LIBUNWIND_TARGET_S390X))
+    (defined(_LIBUNWIND_TARGET_AARCH64) || defined(_LIBUNWIND_TARGET_S390X) || defined(_LIBUNWIND_TARGET_RISCV))
 #include <sys/syscall.h>
 #include <sys/uio.h>
 #include <unistd.h>
@@ -985,6 +985,10 @@ private:
 #if defined(_LIBUNWIND_TARGET_S390X)
   bool setInfoForSigReturn(Registers_s390x &);
   int stepThroughSigReturn(Registers_s390x &);
+#endif
+#if defined(_LIBUNWIND_TARGET_RISCV)
+  bool setInfoForSigReturn(Registers_riscv &);
+  int stepThroughSigReturn(Registers_riscv &);
 #endif
   template <typename Registers> bool setInfoForSigReturn(Registers &) {
     return false;
@@ -2790,6 +2794,52 @@ int UnwindCursor<A, R>::stepThroughSigReturn(Registers_s390x &) {
 }
 #endif // defined(_LIBUNWIND_CHECK_LINUX_SIGRETURN) &&
        // defined(_LIBUNWIND_TARGET_S390X)
+
+#if defined(_LIBUNWIND_CHECK_LINUX_SIGRETURN) && defined(_LIBUNWIND_TARGET_RISCV)
+template <typename A, typename R>
+bool UnwindCursor<A, R>::setInfoForSigReturn(Registers_riscv &) {
+  const pint_t pc = static_cast<pint_t>(this->getReg(UNW_REG_IP));
+  // Look for instructions: li a7,139; ecall
+  if (_addressSpace.get32(pc) == 0x08b00893 &&
+      _addressSpace.get32(pc + 4) == 0x00000073) {
+    _info = {};
+    _isSigReturn = true;
+    return true;
+  }
+  return false;
+}
+
+template <typename A, typename R>
+int UnwindCursor<A, R>::stepThroughSigReturn(Registers_riscv &) {
+  // riscv has the similar signal frame layout as aarch64:
+  //   - 128-byte siginfo struct
+  //   - ucontext struct:
+  //     - 8-byte long (uc_flags)
+  //     - 8-byte pointer (uc_link)
+  //     - 24-byte stack_t
+  //     - 8-byte signal set
+  //     - 120-byte __glibc_reserved
+  //     - 8-byte padding because uc_mcontext has 16-byte alignment
+  //     - mcontext_t uc_mcontext;
+  // https://github.com/torvalds/linux/blob/master/arch/riscv/kernel/signal.c
+
+  const pint_t kOffsetSpToSigcontext = (128 + 8 + 8 + 24 + 128 + 8); // 304
+  // Offsets from sigcontext to each register
+  // 0:pc 8:ra 16:sp 24:gp 32:tp 72:fp
+  const pint_t kOffsetSp = 16;
+  const pint_t kOffsetPc = 0;
+
+  pint_t sigctx = _registers.getSP() + kOffsetSpToSigcontext;
+  for (int i = 0; i <= 31; ++i) {
+    uint64_t value = _addressSpace.get64(sigctx + static_cast<pint_t>(i * 8));
+    _registers.setRegister(UNW_RISCV_X0 + i, value);
+  }
+  _registers.setSP(_addressSpace.get64(sigctx + kOffsetSp));
+  _registers.setIP(_addressSpace.get64(sigctx + kOffsetPc));
+  _isSignalFrame = true;
+  return UNW_STEP_SUCCESS;
+}
+#endif // defined(_LIBUNWIND_CHECK_LINUX_SIGRETURN) && defined(_LIBUNWIND_TARGET_RISCV)
 
 template <typename A, typename R>
 int UnwindCursor<A, R>::step() {

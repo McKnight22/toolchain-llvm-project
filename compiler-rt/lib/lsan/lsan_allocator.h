@@ -49,7 +49,9 @@ struct ChunkMetadata {
   u32 stack_trace_id;
 };
 
-#if !SANITIZER_CAN_USE_ALLOCATOR64
+#if !SANITIZER_CAN_USE_ALLOCATOR64 || \
+    defined(__mips64) || defined(__aarch64__) || defined(__i386__) || \
+    defined(__arm__) || defined(__riscv)
 template <typename AddressSpaceViewTy>
 struct AP32 {
   static const uptr kSpaceBeg = 0;
